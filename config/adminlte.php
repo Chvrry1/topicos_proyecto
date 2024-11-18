@@ -344,12 +344,12 @@ return [
                
                 [
                     'text' => 'Tipos',
-                    'url' => 'admin/settings',
+                    'route' => 'admin.vehicletypes.index',
                     'icon' => 'fas fa-truck-loading',
                 ],
                 [
                     'text' => 'Colores',
-                    'url' => 'admin/settings',
+                    'route' => 'admin.vehiclecolors.index',
                     'icon' => 'fas fa-palette',
                 ]
             ]
