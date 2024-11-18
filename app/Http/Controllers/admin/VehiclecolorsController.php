@@ -19,7 +19,6 @@ class VehiclecolorsController extends Controller
         if ($request->ajax()) {
 
             return DataTables::of($vehiclecolors)
-
                 ->addColumn('actions', function ($vehiclecolor) {
                     return '
                     <div class="dropdown">
@@ -58,23 +57,18 @@ class VehiclecolorsController extends Controller
         try {
             Vehiclecolor::create([
                 'name' => $request->name,
-                'description' => $request->description
+                'description' => $request->description,
+                'rgb_value' => $request->rgb_value // Guardar el valor RGB
             ]);
-
+    
             return response()->json(['message' => 'Color de vehículo registrado correctamente'], 200);
         } catch (\Throwable $th) {
             return response()->json(['message' => 'Error en el registro: ' . $th->getMessage()], 500);
         }
-    }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
     }
-
+    
+    
     /**
      * Show the form for editing the specified resource.
      */
@@ -82,6 +76,7 @@ class VehiclecolorsController extends Controller
     {
         $vehiclecolor = Vehiclecolor::find($id);
         return view('admin.vehiclecolors.edit', compact('vehiclecolor'));
+        
     }
 
     /**
@@ -91,13 +86,18 @@ class VehiclecolorsController extends Controller
     {
         try {
             $vehiclecolor = Vehiclecolor::find($id);
-            $vehiclecolor->update($request->all());
-
+            $vehiclecolor->update([
+                'name' => $request->name,
+                'description' => $request->description,
+                'rgb_value' => $request->rgb_value // Actualizar el valor RGB
+            ]);
+    
             return response()->json(['message' => 'Color de vehículo actualizado'], 200);
         } catch (\Throwable $th) {
-            return response()->json(['message' => 'Error al actualizar el color de vehículo'], 500);
+            return response()->json(['message' => 'Error al actualizar el color del vehículo: ' . $th->getMessage()], 500);
         }
     }
+
 
     /**
      * Remove the specified resource from storage.
@@ -105,7 +105,7 @@ class VehiclecolorsController extends Controller
     public function destroy(string $id)
     {
         try {
-            $vehiclecolor = Vehiclecolor::find($id);
+            $vehiclecolor = Vehiclecolor::findOrFail($id);
             $vehiclecolor->delete();
 
             return response()->json(['message' => 'Color de vehículo eliminado'], 200);

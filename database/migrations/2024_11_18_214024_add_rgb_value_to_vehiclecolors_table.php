@@ -11,12 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('vehiclecolors', function (Blueprint $table) {
-            $table->id();
-            $table->string("name", 100);
-            $table->text("description")->nullable();
-            $table->string('rgb_value',100)->nullable();
-            $table->timestamps();
+        Schema::table('vehiclecolors', function (Blueprint $table) {
+            $table->string('rgb_value')->nullable()->after('description');
+
         });
     }
 
@@ -25,6 +22,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('vehiclecolors');
+        Schema::table('vehiclecolors', function (Blueprint $table) {
+            $table->dropColumn('rgb_value');
+        });
     }
 };

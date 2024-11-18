@@ -2,10 +2,6 @@
 
 @section('title', 'ReciclaUSAT')
 
-{{-- @section('content_header')
-  <h1>Marcas</h1>
-@stop --}}
-
 @section('content')
     <div class="p-2"></div>
     <div class="card">
@@ -21,6 +17,7 @@
                     <tr>
                         <th>ID</th>
                         <th>NOMBRE</th>
+                        <th>CÓDIGO RGB</th>
                         <th>DESCRIPCIÓN</th>
                         <th width="10"></th>
                     </tr>
@@ -75,7 +72,10 @@
                         "data": "name",
                     },
                     {
-                        "data": "description",
+                        "data": "rgb_value",
+                    },
+                    {   
+                        "data": "description", 
                     },
                     {
                         "data": "actions",
