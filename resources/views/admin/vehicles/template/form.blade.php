@@ -6,6 +6,7 @@
             'placeholder' => 'Código',
             'required',
         ]) !!}
+        <span id="code-error" class="text-danger"></span>
     </div>
     <div class="form-group col-9">
         {!! Form::label('name', 'Nombre') !!}
@@ -14,9 +15,10 @@
             'placeholder' => 'Nombre del vehículo',
             'required',
         ]) !!}
+        <span id="name-error" class="text-danger"></span>
     </div>
-
 </div>
+
 <div class="form-row">
     <div class="form-group col-6">
         {!! Form::label('brand_id', 'Marca') !!}
@@ -61,6 +63,7 @@
             'placeholder' => 'Placa del vehículo',
             'required',
         ]) !!}
+        <span id="plate-error" class="text-danger"></span>
     </div>
     <div class="form-group col-6">
         {!! Form::label('year', 'Año') !!}
@@ -69,8 +72,10 @@
             'placeholder' => 'Año del vehículo',
             'required',
         ]) !!}
+        <span id="year-error" class="text-danger"></span>
     </div>
 </div>
+
 <div class="form-row">
     <div class="form-group col-6">
         {!! Form::label('occupant_capacity', 'Capacidad de ocupantes') !!}
@@ -156,3 +161,40 @@
         $('#imageInput').click();
     });
 </script>
+
+
+<script>
+    $(document).ready(function () {
+    $('input, select').on('blur', function() {
+        const field = $(this).attr('name');
+        const value = $(this).val();
+
+        $.ajax({
+            url: "{{ route('validate.field') }}",
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                field: field,
+                value: value,
+                id: '{{ $vehicle->id ?? null }}'
+            },
+            success: function(response) {
+                $(`#${field}-error`).remove();
+                $(`input[name="${field}"]`).removeClass('is-invalid').addClass('is-valid');
+            },
+            error: function(xhr) {
+                $(`#${field}-error`).remove();
+                if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    const error = xhr.responseJSON.errors;
+                    $(`input[name="${field}"]`).addClass('is-invalid')
+                        .after(`<span id="${field}-error" class="text-danger">${error}</span>`);
+                }
+            }
+        });
+    });
+});
+
+</script>
+
+
+

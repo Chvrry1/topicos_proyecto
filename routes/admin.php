@@ -23,3 +23,4 @@ Route::get('imageprofile/{id}/{vehicle_id}', [VehicleimagesController::class, 'p
 Route::resource('zones', ZoneController::class)->names('admin.zones');
 Route::resource('zonecoords', ZonecoordController::class)->names('admin.zonecoords');
 Route::resource('sectors', SectorController::class)->names('admin.sectors');
+
