@@ -50,9 +50,11 @@ class VehicleController extends Controller
                         </div>
                     </div>';
                 })
-                ->addColumn('occupants', function () {
-                    return '<button class="btn btn-success btn-sm"><i class="fas fa-people-arrows"></i>&nbsp;&nbsp;(0)</button>';
-                })
+                ->addColumn('occupants', function ($vehicle) {
+                    return '<button class="btn btn-success btn-sm btnOccupants" data-id="' . $vehicle->id . '">
+                                <i class="fas fa-people-arrows"></i>&nbsp;&nbsp;(0)
+                            </button>';
+                })                                
                 ->rawColumns(['logo', 'status', 'occupants', 'actions'])  // Declarar columnas que contienen HTML
                 ->make(true);
         } else {

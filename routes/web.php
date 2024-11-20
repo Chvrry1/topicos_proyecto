@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\admin\AdminController;
 use App\Http\Controllers\admin\VehicleController;
+use App\Http\Controllers\admin\VehicleocuppantController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -32,3 +33,4 @@ Route::middleware([
 });
 
 Route::post('validate-field', [VehicleController::class, 'validateField'])->name('validate.field');
+Route::get('admin/vehicleocuppants/{vehicle}', [VehicleocuppantController::class, 'index'])->name('admin.vehicleocuppants.index');
