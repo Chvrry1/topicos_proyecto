@@ -13,6 +13,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Facades\Validator;
+
 
 class VehicleController extends Controller
 {
@@ -48,9 +50,11 @@ class VehicleController extends Controller
                         </div>
                     </div>';
                 })
-                ->addColumn('occupants', function () {
-                    return '<button class="btn btn-success btn-sm"><i class="fas fa-people-arrows"></i>&nbsp;&nbsp;(0)</button>';
-                })
+                ->addColumn('occupants', function ($vehicle) {
+                    return '<button class="btn btn-success btn-sm btnOccupants" data-id="' . $vehicle->id . '">
+                                <i class="fas fa-people-arrows"></i>&nbsp;&nbsp;(0)
+                            </button>';
+                })                                
                 ->rawColumns(['logo', 'status', 'occupants', 'actions'])  // Declarar columnas que contienen HTML
                 ->make(true);
         } else {
@@ -82,7 +86,18 @@ class VehicleController extends Controller
             $request->validate([
                 "name" => "unique:vehicles",
                 "code" => "unique:vehicles",
-                "plate" => "unique:vehicles"
+                'plate' => ['unique:vehicles', 'regex:/^([A-Z0-9]{6}|[A-Z0-9]{2}-[A-Z0-9]{4}|[A-Z0-9]{3}-[A-Z0-9]{3})$/'], // Validación de placa
+                'year' => 'integer|min:1900|max:' . date('Y'), // Validación de año
+
+            ], [
+                'plate.required' => 'El campo placa es obligatorio.',
+                'plate.unique' => 'La placa ya está registrada.',
+                'plate.regex' => 'El formato de la placa es inválido. Los formatos permitidos son: XXXXXX, XX-XXXX o XXX-XXX.',
+                'year.integer' => 'El año debe ser un número válido.',
+                'year.min' => 'El año debe ser mayor o igual a 1900.',
+                'year.max' => 'El año no puede ser mayor al actual.',
+                'code.unique' => 'El código ya está registrado.',
+                'name.unique' => 'El nombre ya está registrado.',
             ]);
 
             if (!isset($request->status)) {
@@ -109,6 +124,39 @@ class VehicleController extends Controller
             return response()->json(['message' => 'Error en el registro: ' . $th->getMessage()], 500);
         }
     }
+
+    public function validateField(Request $request)
+    {
+        $field = $request->field;
+        $value = $request->value;
+
+        $rules = [
+            'name' => 'unique:vehicles,name,' . $request->id,
+            'code' => 'unique:vehicles,code,' . $request->id,
+            'plate' => 'required|regex:/^([A-Z0-9]{6}|[A-Z0-9]{2}-[A-Z0-9]{4}|[A-Z0-9]{3}-[A-Z0-9]{3})$/|unique:vehicles,plate,' . $request->id,
+            'year' => 'integer|min:1900|max:' . date('Y'),
+        ];
+
+        $messages = [
+            'plate.required' => 'El campo placa es obligatorio.',
+            'plate.unique' => 'La placa ya está registrada.',
+            'plate.regex' => 'El formato de la placa es inválido. Los formatos permitidos son: XXXXXX, XX-XXXX o XXX-XXX.',
+            'year.integer' => 'El año debe ser un número válido.',
+            'year.min' => 'El año debe ser mayor o igual a 1900.',
+            'year.max' => 'El año no puede ser mayor al actual.',
+            'code.unique' => 'El código ya está registrado.',
+            'name.unique' => 'El nombre ya está registrado.',
+        ];
+
+        $validator = Validator::make([$field => $value], [$field => $rules[$field]], $messages);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()->first($field)], 422);
+        }
+
+        return response()->json(['message' => 'Campo válido'], 200);
+    }
+
 
     /**
      * Display the specified resource.
@@ -145,7 +193,18 @@ class VehicleController extends Controller
             $request->validate([
                 "name" => "unique:vehicles,name," . $id,
                 "code" => "unique:vehicles,code," . $id,
-                "plate" => "unique:vehicles,plate," . $id
+                'plate' => ['unique:vehicles,plate,' . $id, 'regex:/^([A-Z0-9]{6}|[A-Z0-9]{2}-[A-Z0-9]{4}|[A-Z0-9]{3}-[A-Z0-9]{3})$/'], // Validación de placa
+                'year' => 'integer|min:1900|max:' . date('Y'), // Validación de año
+
+            ], [
+                'plate.required' => 'El campo placa es obligatorio.',
+                'plate.unique' => 'La placa ya está registrada.',
+                'plate.regex' => 'El formato de la placa es inválido. Los formatos permitidos son: XXXXXX, XX-XXXX o XXX-XXX.',
+                'year.integer' => 'El año debe ser un número válido.',
+                'year.min' => 'El año debe ser mayor o igual a 1900.',
+                'year.max' => 'El año no puede ser mayor al actual.',
+                'code.unique' => 'El código ya está registrado.',
+                'name.unique' => 'El nombre ya está registrado.',
             ]);
 
             if (!isset($request->status)) {

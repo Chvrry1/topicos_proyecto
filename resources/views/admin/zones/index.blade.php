@@ -6,6 +6,10 @@
   <h1>Marcas</h1>
 @stop --}}
 
+{{-- @section('content_header')
+  <h1>Marcas</h1>
+@stop --}}
+
 @section('content')
     <div class="p-2"></div>
     <div class="card">

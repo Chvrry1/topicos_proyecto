@@ -91,7 +91,9 @@
                         "data": "occupants",
                         "orderable": false,
                         "searchable": false,
-                    },
+                        
+                    }
+                    ,
                     {
                         "data": "actions",
                         "orderable": false,
@@ -294,6 +296,14 @@
             var table = $('#datatable').DataTable();
             table.ajax.reload(null, false); // Recargar datos sin perder la paginación
         }
+
+        $(document).on('click', '.btnOccupants', function() {
+            var vehicleId = $(this).data('id');
+            window.location.href = `/admin/vehicleocuppants/${vehicleId}`;
+        });
+
     </script>
+
+    
 
 @endsection
