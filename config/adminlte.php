@@ -361,7 +361,7 @@ return [
         ],
         ['header' => 'GESTIÓN DE PERSONAL'],
         [
-            'text' => 'Personas',
+            'text' => 'Personal',
             'url' => 'admin/settings',
             'icon' => 'fas fa-users',
         ],
