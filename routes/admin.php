@@ -31,5 +31,6 @@ Route::get('vehicleocuppants/{vehicle}', [VehicleocuppantController::class, 'ind
 
 Route::get('vehicleocuppants/create/{vehicleId}', [VehicleocuppantController::class, 'create'])->name('admin.vehicleocuppants.create');
 Route::post('vehicleocuppants/store/{vehicleId}', [VehicleocuppantController::class, 'store'])->name('admin.vehicleocuppants.store');
+Route::get('vehicleocuppants/{id}/edit', [VehicleocuppantController::class, 'edit'])->name('admin.vehicleocuppants.edit');
 
 Route::get('users/filter/{usertype_id}', [UserController::class, 'filterByUsertype'])->name('admin.users.filter');
