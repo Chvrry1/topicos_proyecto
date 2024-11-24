@@ -3,19 +3,26 @@
 namespace App\Http\Controllers\admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\District;
 use App\Models\Sector;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
 
-class SectorController extends Controller
-{
+class SectorController extends Controller{
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
-            $sectors = Sector::all();
+            $sectors = Sector::select(
+                'sectors.id',
+                'sectors.name',
+                'sectors.area',
+                'd.name AS dname',
+                'sectors.description'
+            )
+                ->join('districts as d', 'sectors.district_id', '=', 'd.id')->get();
 
             if ($request->ajax()) {
 
@@ -28,7 +35,7 @@ class SectorController extends Controller
                                 </button>
                                 <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                                     <button class="dropdown-item btnEditar" id="' . $sector->id . '"><i class="fas fa-edit"></i>  Editar</button>
-                                    <form action="' . route('admin.zones.destroy', $sector->id) . '" method="POST" class="frmEliminar d-inline">
+                                    <form action="' . route('admin.sectors.destroy', $sector->id) . '" method="POST" class="frmEliminar d-inline">
                                         ' . csrf_field() . method_field('DELETE') . '
                                         <button type="submit" class="dropdown-item"><i class="fas fa-trash"></i> Eliminar</button>
                                     </form>
@@ -51,7 +58,8 @@ class SectorController extends Controller
      */
     public function create()
     {
-        //
+        $districts = District::pluck('name', 'id');
+        return view('admin.sectors.create', compact('districts'));
     }
 
     /**
@@ -59,7 +67,12 @@ class SectorController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        try {
+            Sector::create($request->all());
+            return response()->json(['message' => 'Sector registrado'], 200);
+        } catch (\Throwable $th) {
+            return response()->json(['message' => 'Error en el registro: ' . $th->getMessage()], 500);
+        }
     }
 
     /**
@@ -89,7 +102,11 @@ class SectorController extends Controller
      */
     public function edit(string $id)
     {
-        //
+        
+        $sector = Sector::find($id);
+        $districts = District::pluck('name', 'id');
+        return view('admin.sectors.edit', compact('sector','districts'));
+        
     }
 
     /**
@@ -97,7 +114,15 @@ class SectorController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        try {
+            $sector = Sector::find($id);
+            $sector->update($request->all());
+            return response()->json(['message' => 'Sector actualizado correctamente'], 200);
+        } catch (\Throwable $th) {
+
+            return response()->json(['message' => 'Error en la actualización: ' . $th->getMessage()], 500);
+        }
+
     }
 
     /**
@@ -105,6 +130,13 @@ class SectorController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        try {
+            $sector = Sector::find($id);
+            $sector->delete();
+            return response()->json(['message' => 'Sector eliminado'], 200);
+        } catch (\Throwable $th) {
+            return response()->json(['message' => 'Error al eliminar el sector'], 500);
+        }
     }
+
 }
