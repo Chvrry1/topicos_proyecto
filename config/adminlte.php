@@ -397,7 +397,7 @@ return [
             'submenu' => [
                 [
                     'text' => 'Horarios',
-                    'route' => 'admin.brands.index',
+                    'route' => 'admin.schedules.index',
                     'icon' => 'fas fa-clock',
                 ],
                 [

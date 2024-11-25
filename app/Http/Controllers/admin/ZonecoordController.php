@@ -5,9 +5,9 @@ namespace App\Http\Controllers\admin;
 use App\Http\Controllers\Controller;
 use App\Models\Zonecoord;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
-class ZonecoordController extends Controller
-{
+class ZonecoordController extends Controller{
     /**
      * Display a listing of the resource.
      */
@@ -40,7 +40,8 @@ class ZonecoordController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    
+     public function show(string $id)
     {
         $vertice = Zonecoord::select(
             'latitude as lat',
@@ -53,6 +54,7 @@ class ZonecoordController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
+    //modificar este
     public function edit(string $id)
     {
         $lastCoords = Zonecoord::select(
@@ -65,7 +67,19 @@ class ZonecoordController extends Controller
             'longitude as lng'
         )->where('zone_id', $id)->get();
 
-        return view('admin.zonecoords.create', compact('lastCoords','vertice'))->with('zone_id', $id);
+        // Obtener todas las zonas existentes
+        
+        $existingZones = Zonecoord::select('zone_id', 'latitude as lat', 'longitude as lng')
+            ->where('zone_id', '!=', $id)
+            ->get()
+            ->groupBy('zone_id')
+            ->map(function ($zone) {
+                return $zone->map(function ($coord) {
+                    return ['lat' => $coord->lat, 'lng' => $coord->lng];
+                })->toArray();
+        });
+
+        return view('admin.zonecoords.create', compact('lastCoords', 'vertice', 'existingZones'))->with('zone_id', $id);
     }
 
     /**
@@ -89,4 +103,5 @@ class ZonecoordController extends Controller
             return response()->json(['message' => 'Error en la eliminación: ' . $th->getMessage()], 500);
         }
     }
+    
 }
