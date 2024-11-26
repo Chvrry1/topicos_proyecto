@@ -362,12 +362,12 @@ return [
         ['header' => 'GESTIÓN DE PERSONAL'],
         [
             'text' => 'Personal',
-            'url' => 'admin/settings',
+            'route' => 'admin.users.index',
             'icon' => 'fas fa-users',
         ],
         [
             'text' => 'Tipos',
-            'url' => 'admin/settings',
+            'route' => 'admin.usertypes.index',
             'icon' => 'fas fa-user-tag',
         ],
         ['header' => 'GESTIÓN DE RUTAS'],
