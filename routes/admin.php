@@ -5,6 +5,8 @@ use App\Http\Controllers\admin\AdminController;
 use App\Http\Controllers\admin\BrandController;
 use App\Http\Controllers\admin\BrandmodelController;
 use App\Http\Controllers\admin\SectorController;
+
+use App\Http\Controllers\Admin\UserTypesController;
 use App\Http\Controllers\admin\VehicleController;
 use App\Http\Controllers\admin\VehicleimagesController;
 use App\Http\Controllers\admin\ZoneController;
@@ -19,3 +21,7 @@ Route::get('imageprofile/{id}/{vehicle_id}', [VehicleimagesController::class, 'p
 Route::resource('zones', ZoneController::class)->names('admin.zones');
 Route::resource('zonecoords', ZonecoordController::class)->names('admin.zonecoords');
 Route::resource('sectors', SectorController::class)->names('admin.sectors');
+
+//routes for arumidev
+//Route::resource('users', User::class)->names('admin.users');
+Route::resource('usertypes', UserTypesController::class)->names('admin.usertypes');
