@@ -11,7 +11,7 @@ class UserController extends Controller
 {
     public function index(Request $request)
 {
-    $users = User::with('userType')->get();
+    $users = User::with(['userType', 'zone'])->get();
 
     if ($request->ajax()) {
         return DataTables::of($users)
@@ -31,10 +31,10 @@ class UserController extends Controller
                     </div>';
             })
             ->addColumn('usertype_id', function ($user) {
-                return $user->userType->name;  // Aquí retornas el nombre del tipo de usuario
+                return $user->userType ? $user->userType->name : ''; // Maneja valores null
             })
             ->addColumn('zone_id', function ($user) {
-                return $user->zone_id->name;  // Aquí retornas el nombre de la  zona
+                return $user->zone ? $user->zone->name : ''; // Maneja valores null
             })
             ->rawColumns(['actions'])
             ->make(true);
@@ -42,6 +42,7 @@ class UserController extends Controller
         return view('admin.users.index', compact('users'));
     }
 }
+
 
 
     public function filterByUsertype($usertypeId)
