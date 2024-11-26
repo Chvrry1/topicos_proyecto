@@ -8,7 +8,5 @@ use Illuminate\Database\Eloquent\Model;
 class Usertype extends Model
 {
     use HasFactory;
-    
-    protected $fillable = ['name', 'description'];
-
+    protected $guarded=[];
 }

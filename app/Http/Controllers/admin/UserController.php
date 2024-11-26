@@ -81,13 +81,10 @@ class UserController extends Controller
 
         return response()->json(['message' => 'Usuario creado correctamente']);
     }
-
-
     public function show(string $id)
     {
         //
     }
-
     public function edit(User $user)
     {
         $usertypes = UserType::all();   // Obtener los tipos de usuario
@@ -149,5 +146,4 @@ class UserController extends Controller
             ], 500);
         }
     }
-
 }

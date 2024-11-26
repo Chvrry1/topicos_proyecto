@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string("name", 100);
             $table->text("description")->nullable();
+            $table->string('rgb_value',100)->nullable();
             $table->timestamps();
         });
     }

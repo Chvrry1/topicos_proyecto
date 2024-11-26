@@ -20,6 +20,7 @@
                         <th>ID</th>
                         <th>SECTOR</th>
                         <th>AREA</th>
+                        <th>DISTRITO</th>
                         <th>DESCRIPCIÓN</th>
                         <th>MAPA</th>
                         <th width="10"></th>
@@ -85,6 +86,9 @@
                     },
                     {
                         "data": "area",
+                    },
+                    {
+                        "data": "dname",
                     },
                     {
                         "data": "description",

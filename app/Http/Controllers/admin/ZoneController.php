@@ -11,8 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
 
-class ZoneController extends Controller
-{
+class ZoneController extends Controller{
     /**
      * Display a listing of the resource.
      */
@@ -146,4 +145,11 @@ class ZoneController extends Controller
             return response()->json(['message' => 'Error la eliminación: ' . $th->getMessage()], 500);
         }
     }
+    
+    public function zonesbySector(string $id)
+    {
+        $zones = Zone::where("sector_id", $id)->get();
+        return $zones;
+    }
+    
 }
