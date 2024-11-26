@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Usertype;
 use App\Models\Zone;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Yajra\DataTables\Facades\DataTables;
 
 class UserController extends Controller
@@ -53,8 +54,8 @@ class UserController extends Controller
 
     public function create()
     {
-        $usertypes = Usertype::all(); // Obtener los tipos de usuario
-        $zones = Zone::all(); // Obtener las zonas
+        $usertypes = Usertype::all();   // Obtener los tipos de usuario
+        $zones = Zone::all();           // Obtener las zonas
 
         return view('admin.users.form', compact('usertypes', 'zones'));
     }
@@ -62,20 +63,21 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:50',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8|confirmed',
-            'usertype_id' => 'nullable|exists:usertypes,id',
-            'zone_id'     => 'nullable|exists:zones,id',
-        ]);
+            'name' => 'required|max:50|unique:users,name',
+            'email' => 'required|email|max:255|unique:users,email',
+            'usertype_id' => 'nullable|exists:usertypes,id', 
+            'zone_id' => 'nullable|exists:zones,id',
+            'password' => 'required|string|min:8|confirmed', 
+        ]);        
 
         User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'password' => bcrypt($validated['password']),
             'usertype_id' => $validated['usertype_id'] ?? null,
             'zone_id' => $validated['zone_id'] ?? null,
+            'password' => bcrypt($validated['password']),
         ]);
+        
 
         return response()->json(['message' => 'Usuario creado correctamente']);
     }
@@ -96,28 +98,56 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:50',
-            'email' => 'required|email|unique:users,email,' . $user->id,
-            'password' => 'nullable|string|min:8|confirmed',
-            'usertype_id' => 'required|exists:usertypes,id',
+        // Validar los datos del formulario
+        $validatedData = $request->validate([
+            'name' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('users', 'name')->ignore($user->id), // Ignorar el nombre del usuario actual
+            ],
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($user->id), // Ignorar el correo del usuario actual
+            ],
+            'usertype_id' => 'nullable|exists:usertypes,id',
             'zone_id' => 'nullable|exists:zones,id',
         ]);
 
-        $user->update([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => $request->filled('password') ? bcrypt($validated['password']) : $user->password,
-            'usertype_id' => $validated['usertype_id'],
-            'zone_id' => $validated['zone_id'] ?? null,
+        // Actualizar los datos del usuario
+        $user->name = $validatedData['name'];
+        $user->email = $validatedData['email'];
+        $user->usertype_id = $validatedData['usertype_id'];
+        $user->zone_id = $validatedData['zone_id'];
+
+        // Guardar los cambios
+        $user->save();
+
+        // Retornar respuesta
+        return response()->json([
+            'message' => 'El usuario se ha actualizado correctamente.',
         ]);
-
-        return response()->json(['message' => 'Usuario actualizado correctamente']);
     }
-
 
     public function destroy(User $user)
     {
-        //
+        try {
+            // Intentar eliminar el usuario
+            $user->delete();
+
+            // Retornar una respuesta exitosa
+            return response()->json([
+                'message' => 'Usuario eliminado correctamente.',
+            ], 200);
+        } catch (\Exception $e) {
+            // Manejar errores
+            return response()->json([
+                'message' => 'No se pudo eliminar el usuario.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
+
 }
