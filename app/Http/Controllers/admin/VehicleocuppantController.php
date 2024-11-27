@@ -80,7 +80,8 @@ class VehicleocuppantController extends Controller
             'vehicleName',
             'capacityReachedMessage',
             'disableNewButton'
-        ));
+        ))->with('maxCapacity', $vehicle->occupant_capacity);
+
     }
 
     public function toggleStatus($id)

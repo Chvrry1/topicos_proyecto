@@ -69,12 +69,12 @@
 @section('js')
     <script>
         /*$(document).ready(function() {
-                                                                                            $('#datatable').DataTable({
-                                                                                                language: {
-                                                                                                    url: '//cdn.datatables.net/plug-ins/2.1.7/i18n/es-MX.json',
-                                                                                                },
-                                                                                            });
-                                                                                        })*/
+                                                                                                    $('#datatable').DataTable({
+                                                                                                        language: {
+                                                                                                            url: '//cdn.datatables.net/plug-ins/2.1.7/i18n/es-MX.json',
+                                                                                                        },
+                                                                                                    });
+                                                                                                })*/
 
         $(document).ready(function() {
             var table = $('#datatable').DataTable({
@@ -236,6 +236,7 @@
                         data: form.serialize(),
                         success: function(response) {
                             refreshTable();
+                            checkOccupantsAndEnableButton();
                             Swal.fire('Proceso existoso', response.message, 'success');
                         },
                         error: function(xhr) {
@@ -246,6 +247,27 @@
                 }
             });
         });
+
+        function checkOccupantsAndEnableButton() {
+            $.ajax({
+                url: "{{ url('admin/vehicleocuppants') }}/{{ $vehicleId }}",
+                type: "GET",
+                dataType: "json",
+                success: function(data) {
+                    const currentOccupants = data.data.length; // Número actual de ocupantes
+                    const maxCapacity = {{ $maxCapacity }}; // Capacidad máxima pasada desde el controlador
+
+                    // Habilitar el botón si no se ha alcanzado la capacidad máxima
+                    if (currentOccupants < maxCapacity) {
+                        $("#btnNuevo").prop("disabled", false);
+                    }
+                },
+                error: function(xhr) {
+                    console.error("Error al verificar los ocupantes:", xhr.responseJSON);
+                }
+            });
+        }
+
 
         $(document).on('click', '.btnToggleStatus', function() {
             const id = $(this).data('id');
