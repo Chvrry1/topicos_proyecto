@@ -34,3 +34,4 @@ Route::post('vehicleocuppants/store/{vehicleId}', [VehicleocuppantController::cl
 Route::get('vehicleocuppants/{id}/edit', [VehicleocuppantController::class, 'edit'])->name('admin.vehicleocuppants.edit');
 
 Route::get('users/filter/{usertype_id}', [UserController::class, 'filterByUsertype'])->name('admin.users.filter');
+Route::post('vehicleocuppants/toggle-status/{id}', [VehicleocuppantController::class, 'toggleStatus'])->name('admin.vehicleocuppants.toggleStatus');

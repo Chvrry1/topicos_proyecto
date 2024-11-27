@@ -58,19 +58,19 @@ class VehicleocuppantController extends Controller
                 })
                 ->addColumn('actions', function ($occupant) {
                     return '
-                         <div class="dropdown">
-                             <button class="btn btn-primary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                 <i class="fas fa-bars"></i>
-                             </button>
-                             <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                 <button class="dropdown-item btnEditar" id="' . $occupant->id . '"><i class="fas fa-edit"></i> Editar</button>
-                                 <form action="' . route('admin.vehicleocuppants.destroy', $occupant->id) . '" method="POST" class="frmEliminar d-inline">
-                                     ' . csrf_field() . method_field('DELETE') . '
-                                     <button type="submit" class="dropdown-item"><i class="fas fa-trash"></i> Eliminar</button>
-                                 </form>
-                             </div>
-                         </div>';
-                })
+                        <div class="dropdown">
+                            <button class="btn btn-primary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-bars"></i>
+                            </button>
+                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                <button class="dropdown-item btnToggleStatus" data-id="' . $occupant->id . '"><i class="fas fa-sync"></i> Cambio de Estado</button>
+                                <form action="' . route('admin.vehicleocuppants.destroy', $occupant->id) . '" method="POST" class="frmEliminar d-inline">
+                                    ' . csrf_field() . method_field('DELETE') . '
+                                    <button type="submit" class="dropdown-item"><i class="fas fa-trash"></i> Eliminar</button>
+                                </form>
+                            </div>
+                        </div>';
+                })                
                 ->rawColumns(['status', 'actions'])
                 ->make(true);
         }
@@ -81,6 +81,20 @@ class VehicleocuppantController extends Controller
             'capacityReachedMessage',
             'disableNewButton'
         ));
+    }
+
+    public function toggleStatus($id)
+    {
+        try {
+            $occupant = Vehicleocuppant::findOrFail($id);
+            $occupant->status = !$occupant->status; // Alternar el estado
+            $occupant->save();
+
+            $newStatus = $occupant->status ? 'Activo' : 'Inactivo';
+            return response()->json(['message' => "El estado ha sido cambiado a {$newStatus}."], 200);
+        } catch (\Throwable $th) {
+            return response()->json(['message' => 'Error al cambiar el estado: ' . $th->getMessage()], 500);
+        }
     }
 
 

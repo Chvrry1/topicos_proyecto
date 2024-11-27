@@ -69,12 +69,12 @@
 @section('js')
     <script>
         /*$(document).ready(function() {
-                                                                                        $('#datatable').DataTable({
-                                                                                            language: {
-                                                                                                url: '//cdn.datatables.net/plug-ins/2.1.7/i18n/es-MX.json',
-                                                                                            },
-                                                                                        });
-                                                                                    })*/
+                                                                                            $('#datatable').DataTable({
+                                                                                                language: {
+                                                                                                    url: '//cdn.datatables.net/plug-ins/2.1.7/i18n/es-MX.json',
+                                                                                                },
+                                                                                            });
+                                                                                        })*/
 
         $(document).ready(function() {
             var table = $('#datatable').DataTable({
@@ -176,7 +176,7 @@
 
             $.ajax({
                 url: "{{ route('admin.vehicleocuppants.edit', ':id') }}".replace(':id',
-                id), // Ruta para la edición
+                    id), // Ruta para la edición
                 type: "GET",
                 success: function(response) {
                     $("#formModal #exampleModalLabel").html("Modificar Ocupante");
@@ -246,6 +246,41 @@
                 }
             });
         });
+
+        $(document).on('click', '.btnToggleStatus', function() {
+            const id = $(this).data('id');
+
+            Swal.fire({
+                title: '¿Estás seguro?',
+                text: "¿Deseas cambiar el estado de este ocupante?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sí, cambiar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: `/admin/vehicleocuppants/toggle-status/${id}`,
+                        type: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}'
+                        },
+                        success: function(response) {
+                            Swal.fire('Éxito', response.message, 'success');
+                            refreshTable(); // Recargar la tabla para reflejar el cambio
+                        },
+                        error: function(xhr) {
+                            const message = xhr.responseJSON?.message ||
+                                'Ocurrió un error inesperado.';
+                            Swal.fire('Error', message, 'error');
+                        }
+                    });
+                }
+            });
+        });
+
 
         function refreshTable() {
             var table = $('#datatable').DataTable();
