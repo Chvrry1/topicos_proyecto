@@ -24,13 +24,6 @@
             </div>
         @endif
 
-        {{-- Mostrar alerta si falta un conductor y se alcanzó la capacidad máxima --}}
-        @if ($needsConductorAlert)
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                El vehículo ha alcanzado su capacidad máxima, pero no tiene un conductor registrado. Por favor, registre un
-                conductor.
-            </div>
-        @endif
 
         <div class="card-body table-responsive">
             <table class="table table-striped" id="datatable">
@@ -76,12 +69,12 @@
 @section('js')
     <script>
         /*$(document).ready(function() {
-                                                                                    $('#datatable').DataTable({
-                                                                                        language: {
-                                                                                            url: '//cdn.datatables.net/plug-ins/2.1.7/i18n/es-MX.json',
-                                                                                        },
-                                                                                    });
-                                                                                })*/
+                                                                                        $('#datatable').DataTable({
+                                                                                            language: {
+                                                                                                url: '//cdn.datatables.net/plug-ins/2.1.7/i18n/es-MX.json',
+                                                                                            },
+                                                                                        });
+                                                                                    })*/
 
         $(document).ready(function() {
             var table = $('#datatable').DataTable({
@@ -124,61 +117,51 @@
                     $("#formNuevoOcupante").on("submit", function(e) {
                         e.preventDefault();
 
-                        var form = $(this);
-                        var formData = new FormData(this);
+                        const form = $(this);
+                        const formData = new FormData(this);
 
                         $.ajax({
-                            url: form.attr('action'),
-                            type: form.attr('method'),
+                            url: form.attr("action"),
+                            type: form.attr("method"),
                             data: formData,
                             processData: false,
                             contentType: false,
                             success: function(response) {
-                                if (response.type === 'info') {
-                                    // Si es un mensaje informativo
-                                    Swal.fire({
-                                        icon: 'info',
-                                        title: 'Información',
-                                        text: response.message,
-                                    });
-                                } else {
-                                    // Si es un registro exitoso
+                                if (response.type === "success") {
+                                    // Mostrar mensaje de éxito
+                                    Swal.fire("Proceso exitoso", response.message,
+                                        "success");
+
+                                    // Cerrar modal
                                     $("#formModal").modal("hide");
+
+                                    // Actualizar tabla
                                     refreshTable();
-                                    Swal.fire('Proceso exitoso', response.message,
-                                        'success');
+
+                                    // Deshabilitar botón "Nuevo" si se alcanza la capacidad máxima
+                                    if (response.disableNewButton) {
+                                        $("#btnNuevo").prop("disabled", true);
+                                    }
+                                } else if (response.type === "warning") {
+                                    // Mostrar advertencia
+                                    Swal.fire("Advertencia", response.message,
+                                        "warning");
+
+                                    // Deshabilitar botón si aplica
+                                    if (response.disableNewButton) {
+                                        $("#btnNuevo").prop("disabled", true);
+                                    }
                                 }
                             },
                             error: function(xhr) {
-                                if (xhr.status === 400) {
-                                    // Manejo de errores 400 (capacidad máxima alcanzada)
-                                    Swal.fire({
-                                        icon: 'error',
-                                        title: 'Error',
-                                        text: xhr.responseJSON.message ||
-                                            'No se pueden agregar más ocupantes.',
-                                    });
-                                } else if (xhr.status === 500) {
-                                    // Manejo de errores 500 (error del servidor)
-                                    Swal.fire({
-                                        icon: 'error',
-                                        title: 'Error en el servidor',
-                                        text: 'Ocurrió un error inesperado. Por favor, inténtelo de nuevo.',
-                                    });
-                                } else {
-                                    // Otros errores
-                                    Swal.fire({
-                                        icon: 'error',
-                                        title: 'Error',
-                                        text: xhr.responseJSON.message ||
-                                            'Algo salió mal.',
-                                    });
-                                }
-                            }
-
+                                const message =
+                                    xhr.responseJSON?.message ||
+                                    "Ocurrió un error inesperado.";
+                                Swal.fire("Error", message, "error");
+                            },
                         });
-
                     });
+
                 },
                 error: function() {
                     Swal.fire('Error', 'No se pudo cargar el formulario', 'error');
@@ -192,7 +175,8 @@
             var id = $(this).attr("id");
 
             $.ajax({
-                url: "{{ route('admin.vehicleocuppants.edit', ':id') }}".replace(':id', id), // Ruta para la edición
+                url: "{{ route('admin.vehicleocuppants.edit', ':id') }}".replace(':id',
+                id), // Ruta para la edición
                 type: "GET",
                 success: function(response) {
                     $("#formModal #exampleModalLabel").html("Modificar Ocupante");

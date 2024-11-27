@@ -25,7 +25,6 @@ class VehicleocuppantController extends Controller
         // Verificar si se alcanzó la capacidad máxima
         $capacityReachedMessage = null;
         $disableNewButton = false;
-        $needsConductorAlert = false;
 
         if ($currentOccupants >= $vehicle->occupant_capacity) {
             $capacityReachedMessage = 'El vehículo ya alcanzó su capacidad máxima de ' . $vehicle->occupant_capacity . ' ocupantes.';
@@ -37,7 +36,6 @@ class VehicleocuppantController extends Controller
                 ->exists();
 
             if (!$hasConductor) {
-                $needsConductorAlert = true; // Mostrar alerta si no hay conductor
                 $disableNewButton = false; // Habilitar el botón para permitir registrar un conductor
             }
         }
@@ -81,8 +79,7 @@ class VehicleocuppantController extends Controller
             'vehicleId',
             'vehicleName',
             'capacityReachedMessage',
-            'disableNewButton',
-            'needsConductorAlert'
+            'disableNewButton'
         ));
     }
 
@@ -119,53 +116,54 @@ class VehicleocuppantController extends Controller
                 'status' => 'boolean',
             ]);
     
-            // Verificar si el usuario ya está registrado como ocupante en el mismo vehículo
-            $isUserInSameVehicle = Vehicleocuppant::where('vehicle_id', $vehicleId)
+            $vehicle = Vehicle::findOrFail($vehicleId);
+            $currentOccupants = Vehicleocuppant::where('vehicle_id', $vehicleId)->count();
+            $existingConductor = Vehicleocuppant::where('vehicle_id', $vehicleId)
+                ->where('usertype_id', 2) // 2: Tipo Conductor
+                ->exists();
+    
+            // Validar si el usuario ya está registrado en este vehículo
+            $userInThisVehicle = Vehicleocuppant::where('vehicle_id', $vehicleId)
                 ->where('user_id', $request->user_id)
                 ->exists();
     
-            if ($isUserInSameVehicle) {
+            if ($userInThisVehicle) {
                 return response()->json([
                     'message' => 'El usuario ya está registrado como ocupante en este vehículo.',
-                    'type' => 'error',
+                    'type' => 'warning',
                 ], 400);
             }
     
-            // Verificar si el usuario ya está registrado como ocupante en cualquier otro vehículo
-            $isUserInOtherVehicle = Vehicleocuppant::where('user_id', $request->user_id)
+            // Validar si el usuario ya está registrado en cualquier vehículo
+            $userInAnyVehicle = Vehicleocuppant::where('user_id', $request->user_id)
                 ->exists();
     
-            if ($isUserInOtherVehicle) {
+            if ($userInAnyVehicle) {
                 return response()->json([
                     'message' => 'El usuario ya está registrado como ocupante en otro vehículo.',
-                    'type' => 'error',
+                    'type' => 'warning',
                 ], 400);
             }
     
-            // Obtener la capacidad máxima del vehículo
-            $vehicle = Vehicle::findOrFail($vehicleId);
-            $currentOccupants = Vehicleocuppant::where('vehicle_id', $vehicleId)->count();
+            // Validar si se alcanza la capacidad máxima sin conductor
+            if ($currentOccupants + 1 >= $vehicle->occupant_capacity && !$existingConductor && $request->usertype_id != 2) {
+                return response()->json([
+                    'message' => 'Se requiere que el último ocupante registrado sea un conductor.',
+                    'disableNewButton' => true,
+                    'type' => 'warning',
+                ], 400);
+            }
     
+            // Validar capacidad máxima
             if ($currentOccupants >= $vehicle->occupant_capacity) {
                 return response()->json([
-                    'message' => 'No se pueden registrar más ocupantes. El vehículo ya alcanzó su capacidad máxima de ' . $vehicle->occupant_capacity . ' ocupantes.',
-                    'type' => 'error',
+                    'message' => 'No se pueden registrar más ocupantes. El vehículo ya alcanzó su capacidad máxima.',
+                    'disableNewButton' => true,
+                    'type' => 'warning',
                 ], 400);
             }
     
-            // Verificar si ya existe un conductor
-            $existingConductor = Vehicleocuppant::where('vehicle_id', $vehicleId)
-                ->where('usertype_id', 2) // Tipo Conductor
-                ->exists();
-    
-            if ($existingConductor && $request->usertype_id == 2) {
-                return response()->json([
-                    'message' => 'El vehículo ya tiene un conductor asignado.',
-                    'type' => 'info',
-                ], 200);
-            }
-    
-            // Registrar nuevo ocupante
+            // Registrar ocupante
             Vehicleocuppant::create([
                 'vehicle_id' => $vehicleId,
                 'user_id' => $request->user_id,
@@ -173,12 +171,26 @@ class VehicleocuppantController extends Controller
                 'status' => $request->status ?? 0,
             ]);
     
-            return response()->json(['message' => 'Ocupante registrado correctamente.'], 200);
+            $currentOccupants += 1;
+    
+            // Determinar si el botón debe deshabilitarse
+            $disableNewButton = $currentOccupants >= $vehicle->occupant_capacity;
+    
+            return response()->json([
+                'message' => 'Ocupante registrado correctamente.',
+                'disableNewButton' => $disableNewButton,
+                'type' => 'success',
+            ], 200);
         } catch (\Throwable $th) {
-            return response()->json(['message' => 'Error en el registro: ' . $th->getMessage()], 500);
+            return response()->json([
+                'message' => 'Error en el registro: ' . $th->getMessage(),
+                'type' => 'error',
+            ], 500);
         }
     }
     
+    
+
 
 
     /**
