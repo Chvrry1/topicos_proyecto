@@ -361,13 +361,13 @@ return [
         ],
         ['header' => 'GESTIÓN DE PERSONAL'],
         [
-            'text' => 'Personas',
-            'url' => 'admin/settings',
+            'text' => 'Personal',
+            'route' => 'admin.users.index',
             'icon' => 'fas fa-users',
         ],
         [
             'text' => 'Tipos',
-            'url' => 'admin/settings',
+            'route' => 'admin.usertypes.index',
             'icon' => 'fas fa-user-tag',
         ],
         ['header' => 'GESTIÓN DE RUTAS'],
@@ -397,7 +397,7 @@ return [
             'submenu' => [
                 [
                     'text' => 'Horarios',
-                    'route' => 'admin.brands.index',
+                    'route' => 'admin.schedules.index',
                     'icon' => 'fas fa-clock',
                 ],
                 [
