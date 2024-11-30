@@ -8,6 +8,7 @@ use App\Http\Controllers\admin\RouteController;
 use App\Http\Controllers\admin\SchedulesController;
 use App\Http\Controllers\admin\SectorController;
 use App\Http\Controllers\admin\UserController;
+use App\Http\Controllers\Admin\UserTypesController;
 use App\Http\Controllers\admin\VehiclecolorsController;
 use App\Http\Controllers\admin\VehicleController;
 use App\Http\Controllers\admin\VehicleimagesController;
@@ -27,11 +28,19 @@ Route::get('imageprofile/{id}/{vehicle_id}', [VehicleimagesController::class, 'p
 Route::resource('zones', ZoneController::class)->names('admin.zones');
 Route::resource('zonecoords', ZonecoordController::class)->names('admin.zonecoords');
 Route::resource('sectors', SectorController::class)->names('admin.sectors');
+
+//routes for arumidev
+Route::resource('users', UserController::class)->names('admin.users');
+Route::resource('usertypes', UserTypesController::class)->names('admin.usertypes');
 Route::resource('vehicleocuppants', VehicleocuppantController::class)->names('admin.vehicleocuppants');
 Route::get('vehicleocuppants/{vehicle}', [VehicleocuppantController::class, 'index'])->name('admin.vehicleocuppants.index');
+
 Route::get('vehicleocuppants/create/{vehicleId}', [VehicleocuppantController::class, 'create'])->name('admin.vehicleocuppants.create');
 Route::post('vehicleocuppants/store/{vehicleId}', [VehicleocuppantController::class, 'store'])->name('admin.vehicleocuppants.store');
+Route::get('vehicleocuppants/{id}/edit', [VehicleocuppantController::class, 'edit'])->name('admin.vehicleocuppants.edit');
+
 Route::get('users/filter/{usertype_id}', [UserController::class, 'filterByUsertype'])->name('admin.users.filter');
+Route::post('vehicleocuppants/toggle-status/{id}', [VehicleocuppantController::class, 'toggleStatus'])->name('admin.vehicleocuppants.toggleStatus');
 
 Route::get('zonesbySector/{id}', [ZoneController::class, 'zonesbySector'])->name('admin.zonesbySector');
 Route::resource('schedules', SchedulesController::class)->names('admin.schedules');
