@@ -24,7 +24,7 @@
                         <th>LO.INICIO</th>
                         <th>LO.FINAL</th>
                         <th>ESTADO</th>
-                        <th>MAPA</th>
+                        <th>ZONAS</th>
                         <th width="10"></th>
                     </tr>
                 </thead>
@@ -247,7 +247,7 @@
                 url: "{{ route('admin.routes.show', 'id') }}".replace('id', id),
                 type: "GET",
                 success: function(response) {
-                    $("#formModalMap #exampleModalLabel").html("Mapa de la ruta");
+                    $("#formModalMap #exampleModalLabel").html("Mapa de las zonas");
                     $("#formModalMap .modal-body").html(response);
                     $("#formModalMap").modal("show");                  
                 }
