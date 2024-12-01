@@ -7,15 +7,15 @@
     <div style="display: flex; flex-direction: column; align-items: center;">
         {!! Form::label('color_picker', 'Seleccione un color') !!}
         <input type="color" id="color_picker" class="form-control" 
-               value="{{ isset($vehiclecolor) ? $vehiclecolor->rgb_value : '#ea1010' }}" 
+               value="{{ isset($vehiclecolor) ? $vehiclecolor->rgb_value : '#ffffff' }}" 
                style="width: 100px; height: 35px; padding: 0;">
     </div>
     
     <div style="display: flex; flex-direction: column; align-items: center;">
-        {!! Form::label('hex_code_label', 'Código RGB') !!}
-        <label id="hex_code_label" class="form-control" 
+        {!! Form::label('rgb_code_label', 'Código RGB') !!}
+        <label id="rgb_code_label" class="form-control" 
                style="width: 150px; height: 35px; display: flex; align-items: center; justify-content: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-            {{ isset($vehiclecolor) ? $vehiclecolor->rgb_value : 'rgb(234, 16, 132)' }}
+            {{ isset($vehiclecolor) ? $vehiclecolor->rgb_value : 'rgb(255, 255, 255)' }}
         </label>
     </div>
 
@@ -23,17 +23,11 @@
     <div style="display: flex; flex-direction: column; align-items: center;">
         {!! Form::label('color_display', 'Color Registrado') !!}
         <label class="form-control" 
-               style="background-color: {{ $vehiclecolor->rgb_value }}; width: 100px; height: 35px;">
+               style="background-color: {{ $vehiclecolor->rgb_value }}; width: 100px; height: 35px; border-radius: 5px;">
         </label>
     </div>
     @endif
 </div>
-
-
-
-
-
-
 
 <!-- Campo oculto para almacenar el código RGB -->
 <input type="hidden" id="rgb_value" name="rgb_value" value="{{ isset($vehiclecolor) ? $vehiclecolor->rgb_value : '' }}">
@@ -49,7 +43,6 @@
 <script>
     document.getElementById('color_picker').addEventListener('input', function() {
         const color = this.value;
-        document.getElementById('hex_code_label').textContent = color;
 
         // Convertir a RGB
         const r = parseInt(color.substr(1, 2), 16);
@@ -57,7 +50,10 @@
         const b = parseInt(color.substr(5, 2), 16);
         const rgbText = `rgb(${r}, ${g}, ${b})`;
 
-        // Actualiza el campo oculto
+        // Actualizar el código RGB en la etiqueta
+        document.getElementById('rgb_code_label').textContent = rgbText;
+
+        // Actualizar el campo oculto
         document.getElementById('rgb_value').value = rgbText;
     });
 </script>
