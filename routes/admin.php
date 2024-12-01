@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\admin\AdminController;
 use App\Http\Controllers\admin\BrandController;
 use App\Http\Controllers\admin\BrandmodelController;
+use App\Http\Controllers\admin\RouteController;
 use App\Http\Controllers\admin\SchedulesController;
 use App\Http\Controllers\admin\SectorController;
 use App\Http\Controllers\admin\UserController;
@@ -43,3 +44,6 @@ Route::post('vehicleocuppants/toggle-status/{id}', [VehicleocuppantController::c
 
 Route::get('zonesbySector/{id}', [ZoneController::class, 'zonesbySector'])->name('admin.zonesbySector');
 Route::resource('schedules', SchedulesController::class)->names('admin.schedules');
+
+
+Route::resource('routes', RouteController::class)->names('admin.routes');

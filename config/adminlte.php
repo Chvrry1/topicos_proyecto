@@ -383,7 +383,7 @@ return [
         ],
         [
             'text' => 'Rutas',
-            'url' => 'admin/settings',
+            'route' => 'admin.routes.index',
             'icon' => 'fas fa-route',
         ],
         /*[
