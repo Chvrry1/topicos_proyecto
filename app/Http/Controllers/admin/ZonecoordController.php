@@ -30,8 +30,17 @@ class ZonecoordController extends Controller{
     public function store(Request $request)
     {
         try {
-            Zonecoord::create($request->all());
-            return response()->json(['message' => 'Coordenada registrada'], 200);
+            $coordinates = json_decode($request->input('coordinates'));
+
+            foreach ($coordinates as $coordinate) {
+                Zonecoord::create([
+                    'zone_id' => $request->input('zone_id'),
+                    'latitude' => $coordinate->lat,
+                    'longitude' => $coordinate->lng,
+                ]);
+            }
+
+            return response()->json(['message' => 'Coordenadas registradas'], 200);
         } catch (\Throwable $th) {
             return response()->json(['message' => 'Error en el registro: ' . $th->getMessage()], 500);
         }
