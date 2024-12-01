@@ -18,7 +18,27 @@ class VehicleocuppantController extends Controller
 
     public function index($vehicleId, Request $request)
     {
-        $vehicleName = Vehicle::find($vehicleId)->name;
+        $vehicle = Vehicle::findOrFail($vehicleId); // Obtener el vehículo
+        $vehicleName = $vehicle->name;
+        $currentOccupants = Vehicleocuppant::where('vehicle_id', $vehicleId)->count();
+
+        // Verificar si se alcanzó la capacidad máxima
+        $capacityReachedMessage = null;
+        $disableNewButton = false;
+
+        if ($currentOccupants >= $vehicle->occupant_capacity) {
+            $capacityReachedMessage = 'El vehículo ya alcanzó su capacidad máxima de ' . $vehicle->occupant_capacity . ' ocupantes.';
+            $disableNewButton = true; // Por defecto, deshabilitar el botón
+
+            // Verificar si falta un conductor
+            $hasConductor = Vehicleocuppant::where('vehicle_id', $vehicleId)
+                ->where('usertype_id', 2) // 2: ID del tipo "Conductor"
+                ->exists();
+
+            if (!$hasConductor) {
+                $disableNewButton = false; // Habilitar el botón para permitir registrar un conductor
+            }
+        }
 
         if ($request->ajax()) {
             $occupants = Vehicleocuppant::where('vehicle_id', $vehicleId)
@@ -43,21 +63,40 @@ class VehicleocuppantController extends Controller
                                 <i class="fas fa-bars"></i>
                             </button>
                             <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                <button class="dropdown-item btnEditar" id="' . $occupant->id . '"><i class="fas fa-edit"></i> Editar</button>
+                                <button class="dropdown-item btnToggleStatus" data-id="' . $occupant->id . '"><i class="fas fa-sync"></i> Cambio de Estado</button>
                                 <form action="' . route('admin.vehicleocuppants.destroy', $occupant->id) . '" method="POST" class="frmEliminar d-inline">
                                     ' . csrf_field() . method_field('DELETE') . '
                                     <button type="submit" class="dropdown-item"><i class="fas fa-trash"></i> Eliminar</button>
                                 </form>
                             </div>
                         </div>';
-                })
+                })                
                 ->rawColumns(['status', 'actions'])
                 ->make(true);
         }
 
-        return view('admin.vehicleocuppants.index', compact('vehicleId', 'vehicleName'));
+        return view('admin.vehicleocuppants.index', compact(
+            'vehicleId',
+            'vehicleName',
+            'capacityReachedMessage',
+            'disableNewButton'
+        ))->with('maxCapacity', $vehicle->occupant_capacity);
+
     }
 
+    public function toggleStatus($id)
+    {
+        try {
+            $occupant = Vehicleocuppant::findOrFail($id);
+            $occupant->status = !$occupant->status; // Alternar el estado
+            $occupant->save();
+
+            $newStatus = $occupant->status ? 'Activo' : 'Inactivo';
+            return response()->json(['message' => "El estado ha sido cambiado a {$newStatus}."], 200);
+        } catch (\Throwable $th) {
+            return response()->json(['message' => 'Error al cambiar el estado: ' . $th->getMessage()], 500);
+        }
+    }
 
 
 
@@ -67,14 +106,16 @@ class VehicleocuppantController extends Controller
     public function create($vehicleId)
     {
         $users = User::where('usertype_id', '!=', null)->pluck('name', 'id');
-        $usertypes = Usertype::pluck('name', 'id');
+        $usertypes = Usertype::whereIn('id', [2, 3])->pluck('name', 'id'); // Filtrar solo Conductor y Recolector
 
         $hasConductor = Vehicleocuppant::where('vehicle_id', $vehicleId)
             ->where('usertype_id', 2) // ID del tipo "Conductor"
             ->exists();
         $conductorTypeId = 2; // ID del tipo "Conductor"
+
         return view("admin.vehicleocuppants.create", compact("vehicleId", "users", "usertypes", "hasConductor", "conductorTypeId"));
     }
+
 
 
 
@@ -89,32 +130,82 @@ class VehicleocuppantController extends Controller
                 'usertype_id' => 'required|exists:usertypes,id',
                 'status' => 'boolean',
             ]);
-
+    
+            $vehicle = Vehicle::findOrFail($vehicleId);
+            $currentOccupants = Vehicleocuppant::where('vehicle_id', $vehicleId)->count();
             $existingConductor = Vehicleocuppant::where('vehicle_id', $vehicleId)
-                ->where('usertype_id', 2)
+                ->where('usertype_id', 2) // 2: Tipo Conductor
                 ->exists();
-
-            if ($existingConductor && $request->usertype_id == 2) {
+    
+            // Validar si el usuario ya está registrado en este vehículo
+            $userInThisVehicle = Vehicleocuppant::where('vehicle_id', $vehicleId)
+                ->where('user_id', $request->user_id)
+                ->exists();
+    
+            if ($userInThisVehicle) {
                 return response()->json([
-                    'message' => 'El vehículo ya tiene un conductor asignado',
-                    'type' => 'info', // Indica que es informativo
-                ], 200);
+                    'message' => 'El usuario ya está registrado como ocupante en este vehículo.',
+                    'type' => 'warning',
+                ], 400);
             }
-
-
-
+    
+            // Validar si el usuario ya está registrado en cualquier vehículo
+            $userInAnyVehicle = Vehicleocuppant::where('user_id', $request->user_id)
+                ->exists();
+    
+            if ($userInAnyVehicle) {
+                return response()->json([
+                    'message' => 'El usuario ya está registrado como ocupante en otro vehículo.',
+                    'type' => 'warning',
+                ], 400);
+            }
+    
+            // Validar si se alcanza la capacidad máxima sin conductor
+            if ($currentOccupants + 1 >= $vehicle->occupant_capacity && !$existingConductor && $request->usertype_id != 2) {
+                return response()->json([
+                    'message' => 'Se requiere que el último ocupante registrado sea un conductor.',
+                    'disableNewButton' => true,
+                    'type' => 'warning',
+                ], 400);
+            }
+    
+            // Validar capacidad máxima
+            if ($currentOccupants >= $vehicle->occupant_capacity) {
+                return response()->json([
+                    'message' => 'No se pueden registrar más ocupantes. El vehículo ya alcanzó su capacidad máxima.',
+                    'disableNewButton' => true,
+                    'type' => 'warning',
+                ], 400);
+            }
+    
+            // Registrar ocupante
             Vehicleocuppant::create([
                 'vehicle_id' => $vehicleId,
                 'user_id' => $request->user_id,
                 'usertype_id' => $request->usertype_id,
                 'status' => $request->status ?? 0,
             ]);
-
-            return response()->json(['message' => 'Ocupante registrado correctamente'], 200);
+    
+            $currentOccupants += 1;
+    
+            // Determinar si el botón debe deshabilitarse
+            $disableNewButton = $currentOccupants >= $vehicle->occupant_capacity;
+    
+            return response()->json([
+                'message' => 'Ocupante registrado correctamente.',
+                'disableNewButton' => $disableNewButton,
+                'type' => 'success',
+            ], 200);
         } catch (\Throwable $th) {
-            return response()->json(['message' => 'Error en el registro: ' . $th->getMessage()], 500);
+            return response()->json([
+                'message' => 'Error en el registro: ' . $th->getMessage(),
+                'type' => 'error',
+            ], 500);
         }
     }
+    
+    
+
 
 
     /**
@@ -130,12 +221,13 @@ class VehicleocuppantController extends Controller
      */
     public function edit($id)
     {
-        $occupant = Vehicleocuppant::findOrFail($id);
+        $vehicleoccupant = Vehicleocuppant::findOrFail($id);
         $users = User::pluck('name', 'id');
         $usertypes = Usertype::pluck('name', 'id');
 
-        return view('admin.vehicleocuppants.edit', compact('occupant', 'users', 'usertypes'));
+        return view('admin.vehicleocuppants.edit', compact('vehicleoccupant', 'users', 'usertypes'));
     }
+
 
     /**
      * Update the specified resource in storage.
