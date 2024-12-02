@@ -14,32 +14,36 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
-        $users = User::with(['userType', 'zone'])->get();
+        $users = User::select(
+            'users.id',
+            'users.name',
+            'users.dni',
+            'ut.name as usertype_id',
+            'z.name as zone_id'
+        )
+        ->join('usertypes as ut', 'users.usertype_id', '=', 'ut.id')
+        ->leftjoin('zones as z', 'users.zone_id', '=', 'z.id')
+        ->get();
 
         if ($request->ajax()) {
+
             return DataTables::of($users)
                 ->addColumn('actions', function ($user) {
                     return '
-                        <div class="dropdown">
-                            <button class="btn btn-primary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="fas fa-bars"></i>                        
-                            </button>
-                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                <button class="dropdown-item btnEditar" id="' . $user->id . '"><i class="fas fa-edit"></i>Editar</button>
-                                <form action="' . route('admin.users.destroy', $user->id) . '" method="POST" class="frmEliminar d-inline">
-                                    ' . csrf_field() . method_field('DELETE') . '
-                                    <button type="submit" class="dropdown-item btnEliminar" id="' . $user->id . '"><i class="fas fa-trash"></i> Eliminar</button>
-                                </form>
-                            </div>
-                        </div>';
+                    <div class="dropdown">
+                        <button class="btn btn-primary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-bars"></i>                        
+                        </button>
+                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                            <button class="dropdown-item btnEditar" id="' . $user->id . '"><i class="fas fa-edit"></i>  Editar</button>
+                            <form action="' . route('admin.users.destroy', $user->id) . '" method="POST" class="frmEliminar d-inline">
+                                ' . csrf_field() . method_field('DELETE') . '
+                                <button type="submit" class="dropdown-item"><i class="fas fa-trash"></i> Eliminar</button>
+                            </form>
+                        </div>
+                    </div>';
                 })
-                ->addColumn('usertype_id', function ($user) {
-                    return $user->userType ? $user->userType->name : ''; // Maneja valores null
-                })
-                ->addColumn('zone_id', function ($user) {
-                    return $user->zone ? $user->zone->name : ''; // Maneja valores null
-                })
-                ->rawColumns(['actions'])
+                ->rawColumns(['actions'])  // Declarar columnas que contienen HTML
                 ->make(true);
         } else {
             return view('admin.users.index', compact('users'));
@@ -54,28 +58,48 @@ class UserController extends Controller
 
     public function create()
     {
-        $usertypes = Usertype::all();   // Obtener los tipos de usuario
-        $zones = Zone::all();           // Obtener las zonas
+        $usertypes = Usertype::pluck('name', 'id');   
+        $zones = Zone::pluck('name', 'id');           
 
-        return view('admin.users.form', compact('usertypes', 'zones'));
+        return view('admin.users.create', compact('usertypes', 'zones'));
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|max:50|unique:users,name',
-            'email' => 'required|email|max:255|unique:users,email',
-            'usertype_id' => 'nullable|exists:usertypes,id', 
-            'zone_id' => 'nullable|exists:zones,id',
-            'password' => 'required|string|min:8|confirmed', 
-        ]);        
+
+        $request->validate([
+            'dni' => 'required|numeric|digits:8|unique:users',
+            'email' => 'unique:users',
+            'usertype_id' => 'required|exists:usertypes,id',
+            'zone_id' => 'required|exists:zones,id',
+            'password' => 'required|string|confirmed',
+            'license' => [
+                'nullable',
+                'string',
+                'regex:/^[A-Za-z][0-9]{8}$/', 
+                'required_if:usertype_id,2',
+            ],
+        ],[ 'license.regex' => 'El formato de la Licencia es inválido. El formato permitido es: XNNNNNNNN.',
+            'license.required_if' =>'Usuario Conductor: Los Conductores deben Ingresar su Licencia.',
+            'dni.unique' =>'Este DNI ya está registrado',
+            'email.unique' =>'Este correo electronico ya está registrado',
+
+
+    
+        ]);      
+        $license='';
+        if ($request->usertype_id==2){
+            $license=$request->license;
+        }
 
         User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'usertype_id' => $validated['usertype_id'] ?? null,
-            'zone_id' => $validated['zone_id'] ?? null,
-            'password' => bcrypt($validated['password']),
+            'name' => $request->name,
+            'dni'=> $request->dni,
+            'license' => $license,
+            'email' => $request->email,
+            'usertype_id' => $request->usertype_id,
+            'zone_id' => $request->zone_id,
+            'password' => bcrypt($request->password),
         ]);
         
 
@@ -85,48 +109,69 @@ class UserController extends Controller
     {
         //
     }
-    public function edit(User $user)
+    public function edit(string $id)
     {
-        $usertypes = UserType::all();   // Obtener los tipos de usuario
-        $zones = Zone::all();           // Obtener las zonas
+        $user = User::find($id);
+        $usertypes = Usertype::pluck('name', 'id');   
+        $zones = Zone::pluck('name', 'id');           // Obtener las zonas
 
-        return view('admin.users.form', compact('user', 'usertypes', 'zones'));
+        return view('admin.users.edit', compact('user', 'usertypes', 'zones'));
     }
 
-    public function update(Request $request, User $user)
-    {
-        // Validar los datos del formulario
-        $validatedData = $request->validate([
-            'name' => [
-                'required',
-                'string',
-                'max:50',
-                Rule::unique('users', 'name')->ignore($user->id), // Ignorar el nombre del usuario actual
-            ],
-            'email' => [
-                'required',
-                'email',
-                'max:255',
-                Rule::unique('users', 'email')->ignore($user->id), // Ignorar el correo del usuario actual
-            ],
-            'usertype_id' => 'nullable|exists:usertypes,id',
-            'zone_id' => 'nullable|exists:zones,id',
+    public function update(Request $request, string $id)
+{
+    $user = User::find($id);
+
+    $request->validate([
+        'dni' => 'required|numeric|digits:8|unique:users,dni,' . $id,  // Ignore current user's DNI
+        'email' => 'required|email|unique:users,email,' . $id,  // Ignore current user's email
+        'usertype_id' => 'required|exists:usertypes,id',
+        'zone_id' => 'required|exists:zones,id',
+        'password' => 'nullable|string|confirmed',  // Allow nullable for password
+        'license' => [
+            'nullable',
+            'string',
+            'regex:/^[A-Za-z][0-9]{8}$/', 
+            'required_if:usertype_id,2',
+        ],
+    ], [
+        'license.regex' => 'El formato de la Licencia es inválido. El formato permitido es: XNNNNNNNN.',
+        'license.required_if' => 'Usuario Conductor: Los Conductores deben Ingresar su Licencia.',
+        'dni.unique' => 'Este DNI ya está registrado',
+        'email.unique' => 'Este correo electronico ya está registrado',
+    ]);
+
+    $license = '';
+    if ($request->usertype_id == 2) {
+        $license = $request->license;
+    }
+
+    if ($request->password) {
+        // If password is provided, update with the new one
+        $user->update([
+            'name' => $request->name,
+            'dni' => $request->dni,
+            'license' => $license,
+            'email' => $request->email,
+            'usertype_id' => $request->usertype_id,
+            'zone_id' => $request->zone_id,
+            'password' => bcrypt($request->password),
         ]);
-
-        // Actualizar los datos del usuario
-        $user->name = $validatedData['name'];
-        $user->email = $validatedData['email'];
-        $user->usertype_id = $validatedData['usertype_id'];
-        $user->zone_id = $validatedData['zone_id'];
-
-        // Guardar los cambios
-        $user->save();
-
-        // Retornar respuesta
-        return response()->json([
-            'message' => 'El usuario se ha actualizado correctamente.',
+    } else {
+        // If password is not provided, don't update it
+        $user->update([
+            'name' => $request->name,
+            'dni' => $request->dni,
+            'license' => $license,
+            'email' => $request->email,
+            'usertype_id' => $request->usertype_id,
+            'zone_id' => $request->zone_id,
         ]);
     }
+
+    return response()->json(['message' => 'Persona actualizada'], 200);
+}
+
 
     public function destroy(User $user)
     {
