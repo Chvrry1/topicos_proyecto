@@ -16,6 +16,7 @@ use App\Http\Controllers\admin\VehicleocuppantController;
 use App\Http\Controllers\admin\VehicletypesController;
 use App\Http\Controllers\admin\ZoneController;
 use App\Http\Controllers\admin\ZonecoordController;
+use App\Http\Controllers\admin\ProgramingController;
 
 Route::resource('brands', BrandController::class)->names('admin.brands');
 Route::resource('models', BrandmodelController::class)->names('admin.models');
@@ -47,3 +48,15 @@ Route::resource('schedules', SchedulesController::class)->names('admin.schedules
 
 
 Route::resource('routes', RouteController::class)->names('admin.routes');
+
+  Route::get('programing', [ProgramingController::class, 'index'])->name('admin.programing.index');
+
+  // Ruta para crear nuevas programaciones
+  Route::post('programing', [ProgramingController::class, 'store'])->name('admin.programing.store');
+
+  // Ruta para actualizar las programaciones seleccionadas
+  Route::put('programing', [ProgramingController::class, 'update'])->name('admin.programing.update');
+
+  // Ruta para eliminar las programaciones seleccionadas
+  Route::delete('programing', [ProgramingController::class, 'destroy'])->name('admin.programing.destroy');
+
