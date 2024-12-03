@@ -8,6 +8,7 @@ body {
 /* Sidebar and Navbar */
 .main-sidebar, .navbar {
   background-color: #ba3333 !important;
+
   font-size: 13px;
 }
 
@@ -78,4 +79,8 @@ body {
 /* custom.css */
 .preloader img.img-circle {
   border-radius: 0 !important;
+}
+.nav-link:hover {
+  background-color: #a12b2b !important;
+  color: #fff !important;
 }

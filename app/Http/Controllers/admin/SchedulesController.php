@@ -56,10 +56,26 @@ class SchedulesController extends Controller
     public function store(Request $request)
     {
         try {
+            $request->validate([
+                'time_end' => 'after:time_start',
+            ],['time_end.after'=> 'La Hora Inicio debe ser antes de la Hora Fin',]);
+            $overlap = Schedules::where(function ($query) use ($request) {
+                $query->whereBetween('time_start', [$request->time_start, $request->time_end])
+                    ->orWhereBetween('time_end', [$request->time_start, $request->time_end])
+                    ->orWhere(function ($query) use ($request) {
+                        $query->where('time_start', '<=', $request->time_start)
+                                ->where('time_end', '>=', $request->time_end);
+                    });
+            })->exists();
+    
+            if ($overlap) {
+                return response()->json(['message' => 'Ya existe un horario que se superpone con este rango de tiempo'], 422);
+            }
+
             Schedules::create($request->all());
             return response()->json(['message' => 'Horario registrado'], 200);
         } catch (\Throwable $th) {
-            return response()->json(['message' => 'Error en la actualización: ' . $th->getMessage()], 500);
+            return response()->json(['message' => 'Error en el registro: ' . $th->getMessage()], 500);
         }
     }
 
@@ -76,6 +92,7 @@ class SchedulesController extends Controller
      */
     public function edit(string $id)
     {
+        
         $schedule = Schedules::find($id);
         return view('admin.schedules.edit', compact('schedule'));
     }
@@ -86,7 +103,27 @@ class SchedulesController extends Controller
     public function update(Request $request, string $id)
     {
         try {
+
             $schedule = Schedules::find($id);
+            $request->validate([
+                'time_end' => 'after:time_start',
+            ],['time_end.after'=> 'La Hora Inicio debe ser antes de la Hora Fin',]);
+            $overlap = Schedules::where('id', '!=', $id) // Exclude the current schedule
+            ->where(function ($query) use ($request) {
+                $query->whereBetween('time_start', [$request->time_start, $request->time_end])
+                    ->orWhereBetween('time_end', [$request->time_start, $request->time_end])
+                    ->orWhere(function ($query) use ($request) {
+                        $query->where('time_start', '<=', $request->time_start)
+                                ->where('time_end', '>=', $request->time_end);
+                    });
+            })->exists();
+
+        if ($overlap) {
+            return response()->json([
+                'message' => 'Ya existe un horario que se superpone con este rango de tiempo',
+                'status' => 'error'
+            ], 422);
+        }
             $schedule->update($request->all());
 
             return response()->json([
