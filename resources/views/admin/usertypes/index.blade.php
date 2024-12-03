@@ -170,7 +170,9 @@
                             refreshTable();  // Recargar la tabla después de la eliminación
                         },
                         error: function(xhr) {
-                            Swal.fire('Error', 'No se pudo eliminar el tipo de usuario.', 'error');
+                            let errorMessage = xhr.responseJSON?.message || 'No se pudo eliminar el tipo de usuario.';
+                            Swal.fire('Error', errorMessage, 'error');
+
                         }
                     });
                 }

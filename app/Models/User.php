@@ -20,26 +20,28 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name',
+        'dni',
         'email',
         'password',
         'usertype_id',
         'zone_id',
+        'license'
     ];
 
-    protected $hidden = [
-        'password',
-        'remember_token',
-        'two_factor_recovery_codes',
-        'two_factor_secret',
-    ];
+    // protected $hidden = [
+    //     'password',
+    //     'remember_token',
+    //     'two_factor_recovery_codes',
+    //     'two_factor_secret',
+    // ];
 
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-    ];
+    // protected $casts = [
+    //     'email_verified_at' => 'datetime',
+    // ];
 
-    protected $appends = [
-        'profile_photo_url',
-    ];
+    // protected $appends = [
+    //     'profile_photo_url',
+    // ];
 
     // Relación con UserType
     public function userType()

@@ -102,28 +102,22 @@ class UserTypesController extends Controller
         ]);
     }
 
-    public function destroy(Usertype $usertype)
+    public function destroy(string $id)
     {
-        // Verificar si existen usuarios con este tipo de usuario
-        $usersWithThisUsertype = User::where('usertype_id', $usertype->id)->count();
-
-        if ($usersWithThisUsertype > 0) {
-            return response()->json(['error' => 'No se puede eliminar el tipo de usuario porque hay usuarios asociados a él.'], 400);
-        }
-
         try {
-            DB::beginTransaction();
+            $non_delete_types = ['Administrador', 'Conductor', 'Recolector', 'Ciudadano'];
 
-            // Eliminar el tipo de usuario
+            $usertype = Usertype::find($id);    
+
+            if (in_array($usertype->name, $non_delete_types)) {
+                return response()->json(['message' => 'Este tipo de usuario no se debe eliminar'], 403);
+            }
+
             $usertype->delete();
 
-            DB::commit();
-
-            return response()->json(['message' => 'Tipo de personal eliminado exitosamente.']);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['error' => 'Error al eliminar el tipo de usuario.'], 500);
+            return response()->json(['message' => 'Tipo de Usuario eliminado'], 200);
+        } catch (\Throwable $th) {
+            return response()->json(['message' => 'Error de eliminación'], 500);
         }
     }
 
