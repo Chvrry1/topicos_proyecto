@@ -6,6 +6,7 @@
 <div class="container">
 
     <form id="programming-form" method="GET" action="{{ route('admin.programing.index') }}">
+        <div class="p-2"></div>
         <div class="row mb-3">
             <div class="col-md-3">
                 <label for="vehicle_id">Vehículo</label>
@@ -98,7 +99,10 @@
     </table>
 </div>
 @stop
-
+@section('css')
+    {{-- Add here extra stylesheets --}}
+    <link rel="stylesheet" href="/css/admin_custom.css">
+@stop
 @section('js')
 <script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
 <script>
